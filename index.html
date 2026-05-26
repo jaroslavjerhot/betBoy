@@ -219,6 +219,8 @@
           <button class="btn btn-custom">Tipsport</button>
         </a>
         
+        <button class="btn btn-custom" onclick="fLoadTableData()">betBoy</button>
+        
 
       </div>
 
@@ -250,11 +252,11 @@
           >
         </div>
 
-        <div class="align-self-end">
-          <button class="btn btn-custom" onclick="loadTableData()">
+        <!-- <div class="align-self-end">
+          <button class="btn btn-custom" onclick="fLoadTableData()">
             Načíst data z betBoy API
           </button>
-        </div>
+        </div> -->
 
       </div>
 
@@ -351,9 +353,34 @@
             "https://script.google.com/macros/s/AKfycbxPsVhgqZzApMZa1Q9PY1mUrFkdmvGr0mPTR-ajXwChB-ZNXq52uTDwOrJlGeEu4x7SQg/exec";
 
 
-    async function loadTableData() {
+  async function fLoadTableData() {
 
-        
+      showTableStatus(`Nahrávám data...`);
+      // sample rows
+      // loads data from Google Sheets API
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      if (!data || data.length === 0) {
+          showTableStatus(`Nebyla nalezena žádná data.`);
+          return;
+      }
+
+    const dxlStats={};
+    Object.keys(data).forEach(k => {
+        sDate = k.slice(0,6);
+        if (!dxlStats[sDate]) {
+          dxlStats[sDate] = [Math.round(data[sDate + '-iWinValue']*100)/100, data[sDate + '-iWinCount'], data[sDate + '-iWinMax'], data[sDate + '-lstMatches'] ? data[sDate + '-lstMatches'].length : 0];
+        }
+      });
+
+      localStorage.setItem("data", JSON.stringify(data));
+      localStorage.setItem("stats", JSON.stringify(dxlStats));
+      fDailyTableData();
+    
+    }
+
+function fDailyTableData() {
 
     const selectedDate =
         document.getElementById("datePicker").value.replaceAll("-", "").slice(2);
@@ -363,23 +390,21 @@
     
     document.getElementById("table-head").innerText =
         `Fotbalové zápasy ${sDate}:`;
-
-      console.log("Loading for:", selectedDate);
+      
+    let data = JSON.parse(localStorage.getItem("data")) || [];
+    let stats = JSON.parse(localStorage.getItem("stats")) || [];
     
-      showTableStatus(`Nahrávám data - fotbalové zápasy ${sDate}...`);
-      // sample rows
-      // loads data from Google Sheets API
-      const response = await fetch(API_URL + '?date=' + selectedDate);
-      const data = await response.json();
-
-      if (!data || data.length === 0) {
+    stats = stats[selectedDate] || [0, 0, 0, 0];
+    data = data[selectedDate + '-lstMatches'] || [];
+    
+    if (!data || data.length === 0) {
           showTableStatus(`Pro datum ${sDate} nebyla nalezena žádná data.`);
           return;
       }
 
-      const lstStats = data.at(-1);
+    //const lstStats = data.at(-1);
       //remove last row with totals
-      data.pop();
+      //data.pop();
 
       // set time for col 1
     data.forEach(r => {
@@ -396,10 +421,11 @@
     });
 
       renderTable(data);
-      renderStats(data, lstStats);
+      renderStats(data, stats);
 
       showTable();
     }
+
 
     function fGetFullDate(dateStr) {
       const date = new Date(dateStr);
@@ -528,11 +554,15 @@
 
             const iso =
             d.toISOString().split("T")[0];
-
-            document
-            .getElementById("datePicker")
-            .value = iso;
-            }
+            document.getElementById("datePicker").value = iso;
+            
+            fDailyTableData();
+          }
+        
+        );
+    document.getElementById("datePicker").addEventListener("change", function() {
+            fDailyTableData();
+          }      
         );
 
     function showTableStatus(msg) {
@@ -562,13 +592,13 @@
         .toISOString()
         .split("T")[0];
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayIso = yesterday.toISOString().split("T")[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayIso = yesterday.toISOString().split("T")[0];
 
       document.getElementById("datePicker").value = yesterdayIso;
-
-      loadTableData();
+      fDailyTableData();
+//      fLoadTableData();
     }
 
     init();

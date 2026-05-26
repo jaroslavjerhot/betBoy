@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>betBoy</title>
-  <link rel="icon" href="/img/favicon_letter_16.png" type="image/png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon_letter_32.png">
 
   <!-- Bootstrap -->
   <link
@@ -130,6 +130,14 @@
         color: white !important;
     }
 
+    .centered {
+      text-align: center;
+    }
+
+    .righted {
+      text-align: right;
+    }
+
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -204,14 +212,11 @@
       <!-- <div class="section-title">Actions</div> -->
 
       <div class="toolbar" id="toolbarButtons">
-        <a href="https://www.oddsportal.com/matches/football/yesterday/" target="_blank" rel="noopener noreferrer">
-          <button class="btn btn-custom">OP-včera</button>
+        <a href="https://www.oddsportal.com/matches/football/today/" target="_blank" rel="noopener noreferrer">
+          <button class="btn btn-custom">OddsPortal</button>
         </a>
-        <a href="https://www.oddsportal.com/matches/football/tomorrow/" target="_blank" rel="noopener noreferrer">
-          <button class="btn btn-custom">OP-zítra</button>
-        </a>
-        <a href="https://www.tipsport.cz/kurzy/fotbal-16?timeFilter=form.period.tomorrow" target="_blank" rel="noopener noreferrer">
-          <button class="btn btn-custom">TS-zítra</button>
+        <a href="https://www.tipsport.cz/kurzy/fotbal-16?timeFilter=form.period.today" target="_blank" rel="noopener noreferrer">
+          <button class="btn btn-custom">Tipsport</button>
         </a>
         
 
@@ -264,18 +269,18 @@
       <div class="stats-grid">
 
         <div class="stat-box">
-          <div class="stat-title">Celkem zápasů</div>
-          <div class="stat-value" id="statRows">0</div>
+          <div class="stat-title">Počet vyhraných / všech tipů:</div>
+          <div class="stat-value" id="countWin">0</div>
         </div>
 
         <div class="stat-box">
-          <div class="stat-title">Celkem zápasů</div>
-          <div class="stat-value" id="statRows2">0</div>
+          <div class="stat-title">Celková výhra:</div>
+          <div class="stat-value" id="totalWin">0</div>
         </div>
 
         <div class="stat-box">
-          <div class="stat-title">ROI</div>
-          <div class="stat-value" id="statSuccess">0%</div>
+          <div class="stat-title">Výhra bez nejlepšího tipu:</div>
+          <div class="stat-value" id="totalWinWithoutBestTip">0%</div>
         </div>
 
       </div>
@@ -309,13 +314,14 @@
 
           <thead>
             <tr>
-              <th>Čas</th>
+              <th class="righted">#</th>
+              <th class="centered">Čas</th>
               <th>Liga</th>
               <th>Týmy</th>
-              <th>1</th>
-              <th>0</th>
-              <th>2</th>
-              <th>Skóre</th>
+              <th class="centered">1</th>
+              <th class="centered">0</th>
+              <th class="centered">2</th>
+              <th class="centered">Skóre</th>
             </tr>
           </thead>
 
@@ -371,7 +377,7 @@
           return;
       }
 
-      const iWin = data[data.length-1][0]
+      const lstStats = data.at(-1);
       //remove last row with totals
       data.pop();
 
@@ -384,21 +390,13 @@
         });
     });
 
-    // sort by col 0 and 1
-    //data.sort((a, b) => {
-    //    if (a[0] === b[0]) {
-    //    return a[1].localeCompare(b[1]);
-    //    }
-    //    return a[0].localeCompare(b[0]);
-    //});
-
-    // sort by col 0 and 1
+   // sort by col time
     data.sort((a, b) => {
         return a[1].localeCompare(b[1]);
     });
 
       renderTable(data);
-      renderStats(data, iWin);
+      renderStats(data, lstStats);
 
       showTable();
     }
@@ -424,17 +422,29 @@
       copyIcon.style.marginLeft = "5px";
       copyIcon.title = "Kopírovat";
 
+      
+
       copyIcon.addEventListener("click", () => {
         navigator.clipboard.writeText(content.trim());
-        alert("Zkopírováno: " + content.trim());
+        //alert("Zkopírováno: " + content.trim());
+        // Select the cell content when the copy icon is clicked
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      
       });
 
       cell.appendChild(copyIcon);
     }
 
-    function createCell(content, iCopyCol = 2, isWin=false, isHeader = false) {
+    function createCell(content, iCopyCol = 2, isWin=false, isHeader = false, sClass = "") {
       const cell = document.createElement(isHeader ? "th" : "td");
       cell.textContent = content;
+      if (sClass) {
+        cell.classList.add(sClass);
+      }
       if (!isHeader && iCopyCol === 2) {
         copyIconInCell(content, cell);
       }
@@ -445,25 +455,26 @@
     }
 
 
-    function renderTable(rows, iWin) {
+    function renderTable(rows) {
 
       const tbody =
         document.getElementById("tableBody");
 
       tbody.innerHTML = "";
-
+      let iR=0
       rows.forEach(r => {
-
+        iR++;
         const tr = document.createElement("tr");
 
-        tr.appendChild(createCell(r[1], 1));
+        tr.appendChild(createCell(iR, 0, false, false, 'righted'));
+        tr.appendChild(createCell(r[1], 1, false, false, 'centered'));
         tr.appendChild(createCell(r[0], 0));
         tr.appendChild(createCell(r[2], 2));   
 
-        tr.appendChild(createCell(r[3], 3, (r[7] === 1)));
-        tr.appendChild(createCell(r[4], 4, (r[7] === 0)));
-        tr.appendChild(createCell(r[5], 5, (r[7] === 2)));   
-        tr.appendChild(createCell(r[6], 6));
+        tr.appendChild(createCell(r[3], 3, (r[7] === 1), false, 'centered'));
+        tr.appendChild(createCell(r[4], 4, (r[7] === 0), false, 'centered'));
+        tr.appendChild(createCell(r[5], 5, (r[7] === 2), false, 'centered'));   
+        tr.appendChild(createCell(r[6], 6, false, false, 'centered'));
 
         tbody.appendChild(tr);
       });
@@ -477,25 +488,19 @@
     // RENDER STATS
     // ============================================
 
-    function renderStats(rows, iWin) {
+    function renderStats(rows, lstStats) {
 
-      const total = rows.length;
+      const iWinValue = lstStats[0];
+      const iWinCount = lstStats[1];
+      const iWinMax = lstStats[2];
 
-      const active =
-        rows.filter(r => r.status === "OK").length;
-
-      const errors =
-        rows.filter(r => r.status === "ERROR").length;
-
-      const success =
-        total && iWin
-          ? Math.round(iWin / total)  + "%"
-          : '-';
-
-      document.getElementById("statRows").innerText = total;
-      //document.getElementById("statActive").innerText = active;
-      //document.getElementById("statErrors").innerText = errors;
-      document.getElementById("statSuccess").innerText = success;
+      const sCountWin = rows.length ? `${iWinCount} / ${rows.length} (${Math.round(iWinCount / rows.length * 100)}%)` : '-';
+      const sTotalWin = rows.length ? `${iWinValue} / ${rows.length} (${Math.round(iWinValue / rows.length * 100)}%)` : '-';
+      const sTotalWinWithoutBestTip = rows.length > 1 ? `${iWinValue - iWinMax} / ${rows.length - 1} (${Math.round((iWinValue - iWinMax) / (rows.length - 1) * 100)}%)` : '-';
+            
+      document.getElementById("countWin").innerText = sCountWin;
+      document.getElementById("totalWin").innerText = sTotalWin;
+      document.getElementById("totalWinWithoutBestTip").innerText = sTotalWinWithoutBestTip;
     }
 
 

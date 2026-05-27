@@ -131,6 +131,20 @@
         background: #179d48 !important;
         color: white !important;
     }
+    
+    .win-cell:hover {
+        background: #158d41 !important;
+        color: white !important;
+    }
+    .cell-link {
+      display: block;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      color: inherit;
+      background: inherit;
+      text-decoration: none;
+    }
 
     .centered {
       text-align: center;
@@ -192,10 +206,6 @@
         flex-direction: column;
         gap: 15px;
       }
-      .smallLinkBtn {
-        padding: 6px 12px;
-        font-size: 0.9rem;
-      }
 
       .date-panel {
         flex-direction: column;
@@ -221,13 +231,7 @@
 
   <div class="container-fluid p-3 p-lg-4">
     <img src="img/logo_mobile_60.png" alt="Logo">
-    <!-- HEADER -->
-    <!-- <div class="top-header rounded-4 mb-4">
-        
-      
-    </div> -->
-
-
+    
     <!-- BUTTON BAR -->
     <div class="main-card mb-4">
 
@@ -282,11 +286,15 @@
           >
         </div>
 
-        <!-- <div class="align-self-end">
-          <button class="btn btn-custom" onclick="fLoadTableData()">
-            Načíst data z betBoy API
-          </button>
-        </div> -->
+        <div>
+          <label class="form-label">Měsíc</label>
+          <input
+            type="month"
+            class="form-control"
+            id="monthPicker"
+          >
+        </div>
+
 
       </div>
 
@@ -294,7 +302,7 @@
 
 
 <!-- STATS -->
-    <div class="main-card">
+    <div class="main-card" id="dailyStatsGrid">
 
       <div class="section-title">Statistiky</div>
 
@@ -340,26 +348,45 @@
             Nahrávám data...
         </div>
 
-        <div class="table-responsive" id="tableContainer">
+        <div class="table-responsive" id="monthlyTableContainer">
 
-        <table class="table table-dark table-hover align-middle">
+        <table class="table table-dark table-hover align-middle" id ="monthlyTable">
 
-          <thead>
-            <tr>
-              <th class="righted">#</th>
-              <th class="centered">Čas</th>
-              <th>Liga</th>
-              <th>Týmy</th>
-              <th class="centered">1</th>
-              <th class="centered">0</th>
-              <th class="centered">2</th>
-              <th class="centered">Skóre</th>
-            </tr>
-          </thead>
+            <thead id ="monthlyTableHead">
+              <tr>
+                <th class="righted">Datum</th>
+                <th class="centered">Počet vyhraných / všech tipů</th>
+                <th class="centered">Celková výhra</th>
+                <th class="centered">Výhra bez nejlepšího tipu</th>
+                <th class="centered">Detail</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTableBody">
+            </tbody>
+        </table>
+        </div>
 
-          <tbody id="tableBody">
-          </tbody>
-
+        <div class="table-responsive" id="dailyTableContainer">
+        <div>
+          <button class="btn btn-custom" onclick="fMonthlyTableData()">Měsíční přehled</button>
+          <br>
+        </div>  
+          
+        <table class="table table-dark table-hover align-middle" id ="dailyTable">
+            <thead id ="dailyTableHead">
+              <tr>
+                <th class="righted">#</th>
+                <th class="centered">Čas</th>
+                <th>Liga</th>
+                <th>Týmy</th>
+                <th class="centered">1</th>
+                <th class="centered">0</th>
+                <th class="centered">2</th>
+                <th class="centered">Skóre</th>
+              </tr>
+            </thead>
+            <tbody id="dailyTableBody">
+            </tbody>
         </table>
 
       </div>
@@ -385,14 +412,14 @@
 
   async function fLoadTableData() {
 
-      showTableStatus(`Nahrávám data...`);
+      fShowDailyTableStatus(`Nahrávám data...`);
       // sample rows
       // loads data from Google Sheets API
       const response = await fetch(API_URL);
       const data = await response.json();
 
       if (!data || data.length === 0) {
-          showTableStatus(`Nebyla nalezena žádná data.`);
+          fShowDailyTableStatus(`Nebyla nalezena žádná data.`);
           return;
       }
 
@@ -410,14 +437,20 @@
     
     }
 
-function fDailyTableData() {
+function fDailyTableData(sDate) {
 
-    const selectedDate =
-        document.getElementById("datePicker").value.replaceAll("-", "").slice(2);
+    //const selectedDate =
+    //    document.getElementById("datePicker").value.replaceAll("-", "").slice(2);
+
+    const selectedDate = sDate.split('.').reverse().join('').slice(2);
+  
+
 
     //const sDate = selectedDate.slice(4,6) + "." + selectedDate.slice(2,4) + ".20" + selectedDate.slice(0,2);
-    const sDate = fGetFullDate(document.getElementById("datePicker").value);
+  //  const sDate = fGetFullDate(document.getElementById("datePicker").value);
     
+
+
     document.getElementById("table-head").innerText =
         `Fotbalové zápasy ${sDate}:`;
       
@@ -428,15 +461,10 @@ function fDailyTableData() {
     data = data[selectedDate + '-lstMatches'] || [];
     
     if (!data || data.length === 0) {
-          showTableStatus(`Pro datum ${sDate} nebyla nalezena žádná data.`);
+          fShowDailyTableStatus(`Pro datum ${sDate} nebyla nalezena žádná data.`);
           return;
       }
 
-    //const lstStats = data.at(-1);
-      //remove last row with totals
-      //data.pop();
-
-      // set time for col 1
     data.forEach(r => {
         const date = new Date(r[1]);
         r[1] = date.toLocaleString("cs-CZ", {
@@ -450,11 +478,52 @@ function fDailyTableData() {
         return a[1].localeCompare(b[1]);
     });
 
-      renderTable(data);
+      fRenderDailyTable(data, selectedDate);
       renderStats(data, stats);
 
-      showTable();
-    }
+      fShowDailyTable();
+  }
+
+function fMonthlyTableData() {
+
+    const selectedMonth =
+        document.getElementById("monthPicker").value.replaceAll("-", "").slice(2);
+
+    //const sDate = selectedDate.slice(4,6) + "." + selectedDate.slice(2,4) + ".20" + selectedDate.slice(0,2);
+  const sMonth = document.getElementById("monthPicker").value ? new Date(document.getElementById("monthPicker").value + "-01").toLocaleString("cs-CZ", {
+        month: "long",
+        year: "numeric",
+      }) : "";
+
+    document.getElementById("table-head").innerText =
+        `Fotbalové zápasy ${sMonth}:`;
+      
+    let stats = JSON.parse(localStorage.getItem("stats")) || [];
+    // converts to matrix and filters for selected month
+    stats = Object.entries(stats).map(([key, arr]) => [key, ...arr]);
+    
+// filter stats for selected month and sort by date desc
+    stats = stats.filter(s => s[0].slice(0,4) === selectedMonth).sort((a, b) => a[0] - b[0]);
+    //stats = Object.keys(stats).filter(k => k.slice(0,4) === selectedMonth).map(k => stats[k]).sort((a, b) => b[3] - a[3]);
+    
+    
+    if (!stats || stats.length === 0) {
+          fShowDailyTableStatus(`Pro měsíc ${sMonth} nebyla nalezena žádná data.`);
+          return;
+      }
+
+    stats.forEach(r => {
+        r[0] = r[0].slice(4,6) + "." + r[0].slice(2,4) + ".20" + r[0].slice(0,2);
+        });
+
+   
+
+      fRenderMonthlyTable(stats);
+
+      fShowMonthlyTable();
+  }
+
+
 
 
     function fGetFullDate(dateStr) {
@@ -495,22 +564,23 @@ function fDailyTableData() {
       cell.appendChild(copyIcon);
     }
 
-    function createCell(content, iCopyCol = 2, isWin=false, isHeader = false, sClass = "", sLink = "") {
+    function createCell(content, bCopyCol = 2, isWin=false, isHeader = false, sClass = "", sLink = "") {
       const cell = document.createElement(isHeader ? "th" : "td");
       cell.textContent = content;
-      if (sClass) {
-        cell.classList.add(sClass);
-      }
+
       if (sLink) {
         const link = document.createElement("a"); 
         link.href = sLink;
-        //link.classList.add("btn", "btn-sm", "btn-custom", "smallLinkBtn");
+        link.classList.add("cell-link");
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.appendChild(cell);
         return link;
       }
-      if (!isHeader && iCopyCol === 2) {
+      if (sClass) {
+        cell.classList.add(sClass);
+      }
+      if (!isHeader && bCopyCol) {
         copyIconInCell(content, cell);
       }
       if (isWin) {
@@ -519,11 +589,10 @@ function fDailyTableData() {
       return cell;
     }
 
-
-    function renderTable(rows) {
+    function fRenderMonthlyTable(rows) {
 
       const tbody =
-        document.getElementById("tableBody");
+        document.getElementById("monthlyTableBody");
 
       tbody.innerHTML = "";
       let iR=0
@@ -531,20 +600,85 @@ function fDailyTableData() {
         iR++;
         const tr = document.createElement("tr");
 
-        tr.appendChild(createCell(iR, 0, false, false, 'righted'));
-        tr.appendChild(createCell(r[1], 1, false, false, 'centered'));
-        tr.appendChild(createCell(r[0], 0));
-        tr.appendChild(createCell(r[2], 2));   
+        tr.appendChild(createCell(r[0], false, false, false, 'centered'));
 
-        tr.appendChild(createCell(r[3], 3, (r[7] === 1), false, 'centered'));
-        tr.appendChild(createCell(r[4], 4, (r[7] === 0), false, 'centered'));
-        tr.appendChild(createCell(r[5], 5, (r[7] === 2), false, 'centered'));   
-        if (r[6] == ":") {
+        const iWinValue = r[1];
+        const iWinCount = r[2];
+        const iWinMax = r[3];
+        const iTipsCount = r[4];
+        
+
+        const sCountWin = iTipsCount ? `${iWinCount} / ${iTipsCount} (${fMathRound(iWinCount / iTipsCount * 100, 2)}%)` : '-';
+        const sTotalWin = iTipsCount ? `${iWinValue} / ${iTipsCount} (${fMathRound(iWinValue / iTipsCount * 100, 2)}%)` : '-';
+        const sTotalWinWithoutBestTip = iTipsCount > 1 ? `${fMathRound(iWinValue - iWinMax, 2)} / ${iTipsCount - 1} (${fMathRound((iWinValue - iWinMax) / (iTipsCount - 1) * 100, 2)}%)` : '-';
+        
+        tr.appendChild(createCell(sCountWin, false, false, false, 'centered'));
+        tr.appendChild(createCell(sTotalWin, false, (iWinValue > 0), false, 'centered'));
+        tr.appendChild(createCell(sTotalWinWithoutBestTip, false, false, false, 'centered'));  
+        let cellDetail = createCell("detail", false, false, false, 'centered');
+        cellDetail.innerHTML = `<a href="#" onclick="fDailyTableData('${r[0]}'); return false;">Detail</a>`;
+        tr.appendChild(cellDetail);  
+         
+
+        tbody.appendChild(tr);
+      });
+
+      //document.getElementById("tableInfo").innerText =
+      //  rows.length + " řádků načteno";
+    }
+
+
+    // ============================================
+    // RENDER STATS
+    // ============================================
+
+    function renderStats(rows, lstStats) {
+
+      const iWinValue = lstStats[0];
+      const iWinCount = lstStats[1];
+      const iWinMax = lstStats[2];
+
+      const sCountWin = rows.length ? `${iWinCount} / ${rows.length} (${fMathRound(iWinCount / rows.length * 100, 2)}%)` : '-';
+      const sTotalWin = rows.length ? `${iWinValue} / ${rows.length} (${fMathRound(iWinValue / rows.length * 100, 2)}%)` : '-';
+      const sTotalWinWithoutBestTip = rows.length > 1 ? `${fMathRound(iWinValue - iWinMax, 2)} / ${rows.length - 1} (${fMathRound((iWinValue - iWinMax) / (rows.length - 1) * 100, 2)}%)` : '-';
+            
+      document.getElementById("countWin").innerText = sCountWin;
+      document.getElementById("totalWin").innerText = sTotalWin;
+      document.getElementById("totalWinWithoutBestTip").innerText = sTotalWinWithoutBestTip;
+    }
+
+
+    function fMathRound(value, decimals) {
+      return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+    }
+
+    function fRenderDailyTable(rows, selectedDate) {
+
+      const tbody =
+        document.getElementById("dailyTableBody");
+
+      tbody.innerHTML = "";
+      let iR=0
+      rows.forEach(r => {
+        iR++;
+        const tr = document.createElement("tr");
+
+        tr.appendChild(createCell(iR, false, false, false, 'righted'));
+        tr.appendChild(createCell(r[1], false, false, false, 'centered'));
+        tr.appendChild(createCell(r[0], false, false, false, ''));
+        tr.appendChild(createCell(r[2], true, false, false, ''));
+
+        tr.appendChild(createCell(r[3], false, (r[7] === 1), false, 'centered'));
+        tr.appendChild(createCell(r[4], false, (r[7] === 0), false, 'centered'));
+        tr.appendChild(createCell(r[5], false, (r[7] === 2), false, 'centered'));   
+        if (r[6] == ":" || r[6] == "") {
           const sTeams = r[2].replaceAll(' Ž', ' W').replaceAll(' ','+')
-          const sLink = `https://www.google.com/search?q=site%3Asofascore.com+${sTeams}+score+today`;
-          tr.appendChild(createCell('???', 6, false, false, 'centered', sLink));
+          let cellDetail = createCell("detail", false, false, false, 'centered');
+          const sLink = `https://www.google.com/search?q=site%3Asofascore.com+${sTeams}+score+${selectedDate}`;
+          cellDetail.innerHTML = `<a href="${sLink}" target="_blank">Score</a>`;
+          tr.appendChild(cellDetail); 
         } else {
-          tr.appendChild(createCell(r[6], 6, false, false, 'centered'));
+          tr.appendChild(createCell(r[6], false, false, false, 'centered'));
         }
 
         tbody.appendChild(tr);
@@ -565,9 +699,9 @@ function fDailyTableData() {
       const iWinCount = lstStats[1];
       const iWinMax = lstStats[2];
 
-      const sCountWin = rows.length ? `${iWinCount} / ${rows.length} (${Math.round(iWinCount / rows.length * 100)}%)` : '-';
-      const sTotalWin = rows.length ? `${iWinValue} / ${rows.length} (${Math.round(iWinValue / rows.length * 100)}%)` : '-';
-      const sTotalWinWithoutBestTip = rows.length > 1 ? `${iWinValue - iWinMax} / ${rows.length - 1} (${Math.round((iWinValue - iWinMax) / (rows.length - 1) * 100)}%)` : '-';
+      const sCountWin = rows.length ? `${iWinCount} / ${rows.length} (${fMathRound(iWinCount / rows.length * 100, 2)}%)` : '-';
+      const sTotalWin = rows.length ? `${iWinValue} / ${rows.length} (${fMathRound(iWinValue / rows.length * 100, 2)}%)` : '-';
+      const sTotalWinWithoutBestTip = rows.length > 1 ? `${fMathRound(iWinValue - iWinMax, 2)} / ${rows.length - 1} (${fMathRound((iWinValue - iWinMax) / (rows.length - 1) * 100, 2)}%)` : '-';
             
       document.getElementById("countWin").innerText = sCountWin;
       document.getElementById("totalWin").innerText = sTotalWin;
@@ -578,6 +712,12 @@ function fDailyTableData() {
     // ============================================
     // INITIALIZE
     // ============================================
+
+    document.getElementById("monthPicker").addEventListener("change", function() {
+            fMonthlyTableData();
+            localStorage.setItem("selectedMonth", this.value);
+          }      
+        );
 
     document
         .getElementById("rangePicker")
@@ -610,7 +750,7 @@ function fDailyTableData() {
           }      
         );
 
-    function showTableStatus(msg) {
+    function fShowDailyTableStatus(msg) {
 
         document.getElementById("tableStatus")
             .innerText = msg;
@@ -618,17 +758,29 @@ function fDailyTableData() {
         document.getElementById("tableStatus")
             .style.display = "block";
 
-        document.getElementById("tableContainer")
+        document.getElementById("dailyTableContainer")
             .style.display = "none";
     }
     
-    function showTable() {
+    function fShowDailyTable() {
 
-        document.getElementById("tableStatus")
-            .style.display = "none";
+        document.getElementById("tableStatus").style.display = "none";
 
-        document.getElementById("tableContainer")
-            .style.display = "block";
+        document.getElementById("dailyTableContainer").style.display = "block";
+
+        document.getElementById("monthlyTableContainer").style.display = "none";
+          document.getElementById("dailyStatsGrid").style.display = "block";
+        }
+
+      function fShowMonthlyTable() {
+
+        document.getElementById("tableStatus").style.display = "none";
+
+        document.getElementById("monthlyTableContainer").style.display = "block";
+
+        document.getElementById("dailyTableContainer").style.display = "none";
+        document.getElementById("dailyStatsGrid").style.display = "none";
+        
         }
 
     function init() {
@@ -642,7 +794,10 @@ function fDailyTableData() {
       const yesterdayIso = yesterday.toISOString().split("T")[0];
 
       document.getElementById("datePicker").value = yesterdayIso;
-      fDailyTableData();
+      
+      document.getElementById("monthPicker").value = localStorage.getItem("selectedMonth") || today.slice(0,7);
+      fMonthlyTableData();
+      //fDailyTableData();
 //      fLoadTableData();
     }
 

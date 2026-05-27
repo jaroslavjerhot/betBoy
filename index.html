@@ -152,6 +152,11 @@
       padding: 16px;
     }
 
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
     .stat-title {
       color: var(--text-muted);
       font-size: 0.9rem;
@@ -182,6 +187,10 @@
       .header-row {
         flex-direction: column;
         gap: 15px;
+      }
+      .smallLinkBtn {
+        padding: 6px 12px;
+        font-size: 0.9rem;
       }
 
       .date-panel {
@@ -217,12 +226,15 @@
           <button class="btn btn-custom">OddsPortal</button>
         </a>
         <a href="https://www.tipsport.cz/kurzy/fotbal-16?timeFilter=form.period.today" target="_blank" rel="noopener noreferrer">
-          <button class="btn btn-custom">Tipsport</button>
+          <button class="btn btn-custom">TipSport</button>
+              </a>
+              <a href="https://www.kingsbet.cz/sport?page=coupon&sportId=66&couponType=1" target="_blank" rel="noopener noreferrer">
+          <button class="btn btn-custom">KingsBet</button>
         </a>
-        
+        <a href="https://www.allwyn.cz/kurzove-sazky/kurzy/11?timeFilter=TODAY" target="_blank" rel="noopener noreferrer">
+          <button class="btn btn-custom">Allwyn</button>
+        </a>
         <button class="btn btn-custom" onclick="fLoadTableData()">betBoy</button>
-        
-
       </div>
 
     </div>
@@ -466,11 +478,20 @@ function fDailyTableData() {
       cell.appendChild(copyIcon);
     }
 
-    function createCell(content, iCopyCol = 2, isWin=false, isHeader = false, sClass = "") {
+    function createCell(content, iCopyCol = 2, isWin=false, isHeader = false, sClass = "", sLink = "") {
       const cell = document.createElement(isHeader ? "th" : "td");
       cell.textContent = content;
       if (sClass) {
         cell.classList.add(sClass);
+      }
+      if (sLink) {
+        const link = document.createElement("a"); 
+        link.href = sLink;
+        //link.classList.add("btn", "btn-sm", "btn-custom", "smallLinkBtn");
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.appendChild(cell);
+        return link;
       }
       if (!isHeader && iCopyCol === 2) {
         copyIconInCell(content, cell);
@@ -501,7 +522,13 @@ function fDailyTableData() {
         tr.appendChild(createCell(r[3], 3, (r[7] === 1), false, 'centered'));
         tr.appendChild(createCell(r[4], 4, (r[7] === 0), false, 'centered'));
         tr.appendChild(createCell(r[5], 5, (r[7] === 2), false, 'centered'));   
-        tr.appendChild(createCell(r[6], 6, false, false, 'centered'));
+        if (r[6] == ":") {
+          const sTeams = r[2].replaceAll(' Ž', ' W').replaceAll(' ','+')
+          const sLink = `https://www.google.com/search?q=site%3Asofascore.com+${sTeams}+score+today`;
+          tr.appendChild(createCell('???', 6, false, false, 'centered', sLink));
+        } else {
+          tr.appendChild(createCell(r[6], 6, false, false, 'centered'));
+        }
 
         tbody.appendChild(tr);
       });

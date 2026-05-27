@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#0b1f3a">
   <title>betBoy</title>
   <link rel="icon" type="image/png" sizes="32x32" href="img/favicon_letter_32.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Bootstrap -->
   <link
@@ -173,6 +174,9 @@
       margin-bottom: 15px;
       font-weight: bold;
     }
+    .mobile-only {
+      display: none;
+    }
 
     @media (max-width: 768px) {
 
@@ -201,6 +205,14 @@
       .toolbar {
         justify-content: center;
       }
+
+        .desktop-only {
+        display: none;
+      }
+
+      .mobile-only {
+        display: block;
+      }
     }
 
   </style>
@@ -221,7 +233,12 @@
 
       <!-- <div class="section-title">Actions</div> -->
 
-      <div class="toolbar" id="toolbarButtons">
+      <div class="toolbar mobile-only" id="toolbarButtons">
+        <button class="btn btn-custom" onclick="fLoadTableData()">Reload</button>
+      </div>
+
+
+      <div class="toolbar desktop-only" id="toolbarButtons">
         <a href="https://www.oddsportal.com/matches/football/today/" target="_blank" rel="noopener noreferrer">
           <button class="btn btn-custom">OddsPortal</button>
         </a>

@@ -124,7 +124,7 @@
     }
 
     .table tbody tr:hover {
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.5);
     }
 
     .win-cell {
@@ -132,10 +132,7 @@
         color: white !important;
     }
     
-    .win-cell:hover {
-        background: #158d41 !important;
-        color: white !important;
-    }
+
     .cell-link {
       display: block;
       width: 100%;
@@ -268,7 +265,7 @@
 
       <div class="date-panel">
 
-        <div>
+        <!-- <div>
           <label class="form-label">Rychlý výběr</label>
           <select class="form-select" id="rangePicker">
             <option value="yesterday">Včera</option>
@@ -284,7 +281,7 @@
             class="form-control"
             id="datePicker"
           >
-        </div>
+        </div> -->
 
         <div>
           <label class="form-label">Měsíc</label>
@@ -719,36 +716,36 @@ function fMonthlyTableData() {
           }      
         );
 
-    document
-        .getElementById("rangePicker")
-        .addEventListener("change", function() {
+//    document
+ //       .getElementById("rangePicker")
+//        .addEventListener("change", function() {
 
-            const val = this.value;
+//            const val = this.value;
 
-            const d = new Date();
+//            const d = new Date();
 
-            switch(val) {
-                case "yesterday":
-                    d.setDate(d.getDate() - 1);
-                    break;
-                case "tomorrow":
-                    d.setDate(d.getDate() + 1);
-                    break;
-                // today = no change
-            }
+//            switch(val) {
+//                case "yesterday":
+//                    d.setDate(d.getDate() - 1);
+//                    break;
+//                case "tomorrow":
+//                    d.setDate(d.getDate() + 1);
+//                      break;
+//                // today = no change
+//            }
 
-            const iso =
-            d.toISOString().split("T")[0];
-            document.getElementById("datePicker").value = iso;
+  //          const iso =
+  //          d.toISOString().split("T")[0];
+  //          document.getElementById("datePicker").value = iso;
             
-            fDailyTableData();
-          }
-        
-        );
-    document.getElementById("datePicker").addEventListener("change", function() {
-            fDailyTableData();
-          }      
-        );
+  //          fDailyTableData();
+  //        }
+  //      );
+
+  //  document.getElementById("datePicker").addEventListener("change", function() {
+  //          fDailyTableData();
+  //        }      
+  //      );
 
     function fShowDailyTableStatus(msg) {
 
@@ -793,7 +790,7 @@ function fMonthlyTableData() {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayIso = yesterday.toISOString().split("T")[0];
 
-      document.getElementById("datePicker").value = yesterdayIso;
+      //document.getElementById("datePicker").value = yesterdayIso;
       
       document.getElementById("monthPicker").value = localStorage.getItem("selectedMonth") || today.slice(0,7);
       fMonthlyTableData();
